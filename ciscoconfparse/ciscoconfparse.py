@@ -202,16 +202,22 @@ class CiscoConfParse(object):
 
         ## Accept either a string or unicode...
         elif getattr(config, 'encode', False):
+            if self.debug:
+                _log.debug(
+                     "parsing from '{0}' with {1} syntax".format(config, syntax))
             # Try opening as a file
             try:
-                if syntax == 'ios':
-                    # string - assume a filename... open file, split and parse
-                    if self.debug:
-                        _log.debug("parsing from '{0}' with ios syntax".format(
-                            config))
+                if (sys.version_info > (3, 0)):
+                    with open(config, mode="r", newline=None) as f:
+                        text = f.read()
+                else:
                     f = open(config, mode="rU")
                     text = f.read()
-                    rgx = re.compile(linesplit_rgx)
+                    f.close()
+                    
+                rgx = re.compile(linesplit_rgx)
+                
+                if syntax == 'ios':
                     self.ConfigObjs = IOSConfigList(
                         rgx.split(text),
                         comment_delimiter=comment,
@@ -221,13 +227,6 @@ class CiscoConfParse(object):
                         syntax='ios',
                         CiscoConfParse=self)
                 elif syntax == 'nxos':
-                    # string - assume a filename... open file, split and parse
-                    if self.debug:
-                        _log.debug("parsing from '{0}' with nxos syntax".format(
-                            config))
-                    f = open(config, mode="rU")
-                    text = f.read()
-                    rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = NXOSConfigList(
                         rgx.split(text),
                         comment_delimiter=comment,
@@ -237,13 +236,6 @@ class CiscoConfParse(object):
                         syntax='nxos',
                         CiscoConfParse=self)
                 elif syntax == 'asa':
-                    # string - assume a filename... open file, split and parse
-                    if self.debug:
-                        _log.debug("parsing from '{0}' with asa syntax".format(
-                            config))
-                    f = open(config, mode="rU")
-                    text = f.read()
-                    rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = ASAConfigList(
                         rgx.split(text),
                         comment_delimiter=comment,
@@ -254,14 +246,6 @@ class CiscoConfParse(object):
                         CiscoConfParse=self)
 
                 elif syntax == 'junos':
-                    # string - assume a filename... open file, split and parse
-                    if self.debug:
-                        _log.debug("parsing from '{0}' with junos syntax".
-                                   format(config))
-                    f = open(config, mode="rU")
-                    text = f.read()
-                    rgx = re.compile(linesplit_rgx)
-
                     config = self.convert_braces_to_ios(rgx.split(text))
                     ## FIXME I am shamelessly abusing the IOSConfigList for now...
                     self.ConfigObjs = IOSConfigList(
